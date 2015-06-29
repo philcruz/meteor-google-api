@@ -1,10 +1,10 @@
 // kill logs
-var Log = function () {}
+var Log = function (message) {console.log(message);}
 
 GoogleApi = {
   // host component, shouldn't change
   _host: 'https://www.googleapis.com',
-
+    
   _callAndRefresh: function(method, path, options, callback) {
     var self = this;
     options = options || {};
@@ -16,14 +16,18 @@ GoogleApi = {
         if (error && error.response && error.response.statusCode == 401) {
           Log('google-api attempting token refresh');
 
-          return self._refresh(options.user, function(error) {
+          return self._refresh(options.user || options.refreshTokenParams, function(error, result) {
             if (error)
               return callback(error);
             
+            console.log("in the _refresh callback:" + result);
             // if we have the user, we'll need to re-fetch them, as their
             // access token will have changed.
             if (options.user)
               options.user = Meteor.users.findOne(options.user._id);
+            else
+                options.params.access_token = result;
+              
             
             self._call(method, path, options, callback);
           });
@@ -48,16 +52,23 @@ GoogleApi = {
       HTTP.call(method, this._host + '/' + path, options, function(error, result) {
         callback(error, result && result.data);
       });
+    } else if (options.params.access_token) {
+        console.log("options.params.access_token" + options.params.access_token);
+        HTTP.call(method, this._host + '/' + path, options, function(error, result) {
+        callback(error, result && result.data);
+      });
+        
     } else {
       callback(new Meteor.Error(403, "Auth token not found." +
         "Connect your google account"));
     }
   },
 
-  _refresh: function(user, callback) {
+  _refresh: function(refreshObject, callback) {
     Log('GoogleApi._refresh');
+    Log(refreshObject);
 
-    Meteor.call('exchangeRefreshToken', user && user._id, function(error, result) {
+    Meteor.call('exchangeRefreshToken', refreshObject, function(error, result) {
       callback(error, result && result.access_token)
     });
   }

@@ -25,6 +25,36 @@ On the client, if you do not provide a callback, the library will return a [Q pr
 
 If the user's access token has expired, it will transparently call the `exchangeRefreshToken` method to get a new refresh token.
 
+If you don't want to make the call on behalf of the logged in user, i.e. you want to manage the OAuth tokens manually you can pass in options.refreshTokenParams 
+object, for example:
+
+```
+//assuming a Tokens collection that stores the access tokens
+//define a function to update the access token
+updateAccessToken = function(access_token) {    
+    Tokens.upsert(
+                {account: Meteor.settings.account},
+                    { $set:
+                        {                        
+                            accessToken: access_token                            
+                        }
+                    }                
+            );
+}
+
+options = {  
+        refreshTokenParams: {
+            'client_id': Meteor.settings.public.client_id,
+            'client_secret': Meteor.settings.client_secret,
+            'refresh_token': tokens.refreshToken,
+            'updateTokenFunction': updateAccessToken
+        },
+        params: { 'access_token': tokens.accessToken  }
+        }
+
+    result = GoogleApi.get( apiUrl, options);
+```
+
 # Contributions
 
 Are welcome.
