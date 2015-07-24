@@ -53,8 +53,12 @@ GoogleApi = {
         callback(error, result && result.data);
       });
     } else if (options.params.access_token) {
-        console.log("options.params.access_token" + options.params.access_token);
-        HTTP.call(method, this._host + '/' + path, options, function(error, result) {
+      console.log("options.params.access_token" + options.params.access_token);
+      options.headers = options.headers || {};
+      options.headers.Authorization = 'Bearer ' + options.params.access_token;
+      delete options.params.access_token;
+
+      HTTP.call(method, this._host + '/' + path, options, function(error, result) {
         callback(error, result && result.data);
       });
         
